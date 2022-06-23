@@ -33,12 +33,12 @@ public class BFES {
     index.add(clone);
   }
 
-  public List<Score> search(float[] vec, int k) {
-    assert vec.length == dim;
-    float unitFactor = (float) (1.0 / Math.sqrt(dot(vec, vec)));
+  public List<Score> search(float[] query, int k) {
+    assert query.length == dim;
+    float unitFactor = (float) (1.0 / Math.sqrt(dot(query, query)));
     return IntStream.range(0, index.size())
             .parallel()
-            .mapToObj(i -> new Score(i, dot(vec, index.get(i)) * unitFactor))
+            .mapToObj(i -> new Score(i, dot(query, index.get(i))))
             .collect(ConcurrentSkipListMap<Score, float[]>::new,
                     (map, score) -> {
                       if (map.size() == k) {
@@ -48,11 +48,12 @@ public class BFES {
                         }
                         map.remove(key);
                       }
-                      map.put(score, vec);
+                      map.put(score, query);
                     }, AbstractMap::putAll)
             .keySet()
             .stream()
             .limit(k)
+            .map(s -> new Score(s.id(), s.score() * unitFactor))
             .collect(Collectors.toList());
   }
 
